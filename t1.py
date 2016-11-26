@@ -83,21 +83,6 @@ casesOfPM = [
 #==============================================================================
 # SAMPLES VM
 #==============================================================================
-#casesOfVM = [
-#    {"id":1,"Core":1,
-#     "MM":2, #GB
-#     "HD":1, #TB 
-#     "failure":0.1
-#     }, 
-#    {"id":2,"Core":3,
-#     "MM":4, #GB
-#     "HD":2, #TB
-#     "failure":0.1},
-#    {"id":3,"Core":2,
-#     "MM":6, #GB
-#     "HD":4, #TB
-#     "failure":0.1}
-#]
 
 casesOfVM = [
     {"id":1,"Core":4,
@@ -222,58 +207,49 @@ def saveFits(f,generation,fitInfo):
     for v in fitInfo:
         f.write(",%f"%v)
     f.write("\n")
+    f.flush()
+
+
 #==============================================================================
-# 
+#  #  # MAIN
 #==============================================================================
 
 mutationHappen = 0.08 #p que ocurra
 sizePopulation = 100 # different VM
+totalGeneration = 200
+
 gatt = g.GATT(environment,casesOfVM,seed=100)
-
 gatt.population(sizePopulation)
-print len(gatt.pop)
 
-fitMin = []
 
 fileProb = open("prob.csv","w")
+fileFitInfo = open("fits.csv","wr")
+fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,fitValue,Max_CVM,Min_CVM,Mean_CVM,HWmax,HWmin,HPmax,HPmin,HFmax,HFmin,NP,\n")
+fileFitCit = open("fitCit.csv","w")
 
-with open("fits.csv","wr") as f:
-    f.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,fitValue,Max_CVM,Min_CVM,Mean_CVM,HWmax,HWmin,HPmax,HPmin,HFmax,HFmin,NP,\n")
-# [Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,fitValue]
-    fitInfo = gatt.fitnessGeneration
-    print "FIT  Info %s" %fitInfo
-    saveFits(f,0,fitInfo)
-    fitMin.append(fitInfo[9])
+saveFits(fileFitInfo,0,gatt.fitnessGeneration)
 
-    for generation in range(1,500):
-        print "Generation: %i" %generation
-    
-        nextGeneration = gatt.evolve(gatt.C1_OneCuttingPoint,0.9,tries=10000,generation=generation)
-        if not nextGeneration:
-            print "No evolution"
-            break
-        
-        if random.random() <= mutationHappen:
-            state = gatt.mutate()
-            print "\t Mutation: %s" %state   
-    
-        #Fit values
-        fitInfo = gatt.fitnessGeneration
-        saveFits(f,generation,fitInfo)
-        f.flush()
-        fitMin.append(fitInfo[9])
+for generation in range(1,totalGeneration):
+    print "Generation: %i" %generation
+                                        #C1_OneCuttingPoint   C2_TwoCuttingPoint
+    nextGeneration = gatt.evolve(gatt.C1_OneCuttingPoint,0.9,tries=10000,generation=generation)
+    if not nextGeneration:
+        print "No evolution"
+        break
 
-        #Prob values
-        fitProb = gatt.probFitness
-        saveFits(fileProb, generation, fitProb)
-        fileProb.flush()
+    if random.random() <= mutationHappen:
+        state = gatt.mutate()
+        print "\t Mutation: %s" %state
 
+    #Fit values
+    saveFits(fileFitInfo,generation,gatt.fitnessGeneration)
 
-# np.save("fitMin.npy",fitMin)
-# fitMin = np.load("fitMin.npy")
-plt.plot(fitMin)
-plt.show()
+    #Prob values
+    saveFits(fileProb, generation, gatt.probFitness)
+
+    #Fitness citizen
+    saveFits(fileFitCit, generation, gatt.fit)
+
+fileFitInfo.close()
 fileProb.close()
-
-#gatt.show()
-
+fileFitCit.close()

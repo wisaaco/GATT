@@ -570,18 +570,22 @@ class GATT:
         self.fit = []
         for idx,cit in enumerate(self.pop):
                 cvm_count.append(len(self.pop[idx]["cvm"]))
-                # self.fit.append((self.pop[idx]["fit_value"][0] -Wmin / (Wmax - Wmin) +
-                #                  self.pop[idx]["fit_value"][1] -Pmin / (Pmax - Pmin) +
-                #                  self.pop[idx]["fit_value"][2] -Fmin / (Fmax - Fmin)))
-                #self.fit.append(random.random())
-                self.fit.append((self.pop[idx]["fit_value"][0] / (3 * (Wmax - Wmin)) +
-                                  self.pop[idx]["fit_value"][1] / (3 * (Pmax - Pmin)) +
-                                  self.pop[idx]["fit_value"][2] / (3 * (Fmax - Fmin))))
+
+                valueFit = (self.pop[idx]["fit_value"][0] / (3 * (Wmax - Wmin)) +
+                            self.pop[idx]["fit_value"][1] / (3 * (Pmax - Pmin)) +
+                            self.pop[idx]["fit_value"][2] / (3 * (Fmax - Fmin)))
+
+                self.fit.append(valueFit)
 
                 # self.fit.append((    self.pop[idx]["fit_value"][0] -self.Wmin / (3 *  (self.Wmax-self.Wmin))+
                 #                      self.pop[idx]["fit_value"][1] -self.Pmin / (3 * (self.Pmax-self.Pmin))+
                 #                      self.pop[idx]["fit_value"][2] -self.Fmin / (3 * (self.Fmax-self.Fmin))))
 
+
+                # self.fit.append((self.pop[idx]["fit_value"][0] -Wmin / (Wmax - Wmin) +
+                #                  self.pop[idx]["fit_value"][1] -Pmin / (Pmax - Pmin) +
+                #                  self.pop[idx]["fit_value"][2] -Fmin / (Fmax - Fmin)))
+                # self.fit.append(random.random())
 
         return  [Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,np.min(self.fit),np.max(cvm_count),np.min(cvm_count),np.mean(cvm_count),
                  self.Wmax,self.Wmin,self.Pmax,self.Pmin,self.Fmax,self.Fmin]
@@ -936,66 +940,75 @@ class GATT:
     def C2_TwoCuttingPoint(self,citOri,citDest):
         citM = self.pop[citOri]
         citF = self.pop[citDest]
+
         cvmM = citM["cvm"]
         cblM = citM["cbl"]
         cvmF = citF["cvm"]
         cblF = citF["cbl"]
         cbl_idfM = citM["cbl_idf"]
         cbl_idfF = citF["cbl_idf"]
-        i0 = random.randint(0,np.min((len(cvmM),len(cvmF)))-1)
-        i1 = random.randint(i0,np.min((len(cvmM),len(cvmF)))-1)
+
         j0 = random.randint(0,(len(cblM)-1)/3)*3
         j1 = random.randint(j0/3,(len(cblM)-1)/3)*3# Valor J ha de ser %ReplifcationFactor == 0 para asegurar el grado de replicas
-         
-        #Hijos            
-        h1_cvm = np.hstack((cvmM[:i0],cvmF[i0:i1],cvmM[i1:]))
-        h2_cvm = np.hstack((cvmF[:i0],cvmM[i0:i1],cvmF[i1:]))
-        h1_cbl = np.hstack((cblM[:j0],cblF[j0:j1],cblM[j1:]))
-        h2_cbl = np.hstack((cblF[:j0],cblM[j0:j1],cblF[j1:]))
-        
-        h1_setVM = np.hstack((citM["setVM"][:i0],citF["setVM"][i0:i1],citM["setVM"][i1:]))
-        h2_setVM = np.hstack((citF["setVM"][:i0],citM["setVM"][i0:i1],citF["setVM"][i1:]))
-        h1_setVM = h1_setVM.tolist()
-        h2_setVM = h2_setVM.tolist()
-        
+
+        idVMm_sSE_ = np.unique(np.hstack((cblM[:j0],cblM[j1:])))
+        idVMm_sM = np.unique(cblM[j0:j1])
+
+        idVMf_sSE_ = np.unique(np.hstack((cblF[:j0], cblF[j1:])))
+        idVMf_sM = np.unique(cblF[j0:j1])
+
+        h1_cvm = {}
+        map1 = {}
+        key = 0
+        for k in idVMm_sSE_:
+            h1_cvm[key] = cvmM[k]
+            map1[k] = key
+            key += 1
+        h1_cbl_s = np.array(cblM[:j0])
+        h1_cbl_e = np.array(cblM[j1:])
+        for k, v in map1.iteritems(): h1_cbl_s[h1_cbl_s == k] = v
+        for k, v in map1.iteritems(): h1_cbl_e[h1_cbl_e == k] = v
+        map1 = {}
+        for k in idVMf_sM:
+            h1_cvm[key] = cvmF[k]
+            map1[k] = key
+            key += 1
+        h1_cbl_m = np.array(cblF[j0:j1])
+        for k, v in map1.iteritems(): h1_cbl_m[h1_cbl_m == k] = v
+        h1_cbl = np.concatenate((h1_cbl_s,h1_cbl_m,h1_cbl_e))
+
+        h2_cvm = {}
+        map2 = {}
+        key = 0
+        for k in idVMf_sSE_:
+            h2_cvm[key] = cvmF[k]
+            map2[k] = key
+            key += 1
+        h2_cbl_s = np.array(cblF[:j0])
+        h2_cbl_e = np.array(cblF[j1:])
+        for k, v in map2.iteritems(): h2_cbl_s[h2_cbl_s == k] = v
+        for k, v in map2.iteritems(): h2_cbl_e[h2_cbl_e == k] = v
+        map2 = {}
+        for k in idVMm_sM:
+            h2_cvm[key] = cvmM[k]
+            map2[k] = key
+            key += 1
+        h2_cbl_m = np.array(cblM[j0:j1])
+        for k, v in map2.iteritems(): h2_cbl_m[h2_cbl_m == k] = v
+        h2_cbl = np.concatenate((h2_cbl_s, h2_cbl_m, h2_cbl_e))
+
+
+        # h1_cbl = np.hstack((cblM[:j0], cblF[j0:j1], cblM[j1:]))
+        # h2_cbl = np.hstack((cblF[:j0], cblM[j0:j1], cblF[j1:]))
+
+
         h1_cbl_idf = np.hstack((cbl_idfM[:j0],cbl_idfF[j0:j1],cbl_idfM[j1:]))
         h2_cbl_idf = np.hstack((cbl_idfF[:j0],cbl_idfM[j0:j1],cbl_idfF[j1:]))
                     
         
-        return h1_cvm,h1_cbl,h1_cbl_idf,h1_setVM,h2_cvm,h2_cbl,h2_cbl_idf,h2_setVM
-    
-    def C3_NonUniform(self,citOri,citDest):
-        citM = self.pop[citOri]
-        citF = self.pop[citDest]
-        cvmM = citM["cvm"]
-        cblM = citM["cbl"]
-        cvmF = citF["cvm"]
-        cblF = citF["cbl"]
-        cbl_idfM = citM["cbl_idf"]
-        cbl_idfF = citF["cbl_idf"]
-        ##ID1 One cutting-point crossover 
-        i0 = random.randint(0,np.min(len(cvmM))-1)
-        i1 = random.randint(0,np.min(len(cvmF))-1)
-        
-        j0 = random.randint(0,(len(cblM)-1)/3)*3
-        j1 = random.randint(0,(len(cblF)-1)/3)*3
-        #Hijos            
-        h1_cvm = np.hstack((cvmM[:i0],cvmF[i1:]))
-        h2_cvm = np.hstack((cvmF[:i1],cvmM[i0:]))
-        
-        h1_cbl = np.hstack((cblM[:j0],cblF[j1:]))
-        h2_cbl = np.hstack((cblF[:j1],cblM[:j0]))
-        
-        h1_cbl_idf = np.hstack((cbl_idfM[:j0],cbl_idfF[j1:]))
-        h2_cbl_idf = np.hstack((cbl_idfF[:j1],cbl_idfM[:j0]))
-        
-        h1_setVM = np.hstack((citM["setVM"][:i0],citF["setVM"][i1:]))
-        h2_setVM = np.hstack((citF["setVM"][:i1],citM["setVM"][i0:]))
-        h1_setVM = h1_setVM.tolist()
-        h2_setVM = h2_setVM.tolist()
-        return h1_cvm,h1_cbl,h1_cbl_idf,h1_setVM,h2_cvm,h2_cbl,h2_cbl_idf,h2_setVM
+        return h1_cvm,h1_cbl,h1_cbl_idf,h2_cvm,h2_cbl,h2_cbl_idf
 
-   
+
       
     """ Evolve operation """
     def evolve(self,crossoverfunction,crossover_treshold,tries,generation):
@@ -1038,7 +1051,7 @@ class GATT:
 
                     h1_cvm,h1_cbl,h1_cbl_idf,h2_cvm,h2_cbl,h2_cbl_idf = crossoverfunction(citOri,citDest)
 
-                    # print "DEBUG %i" % countDebug
+                    #print "DEBUG %i" % countDebug
                     countDebug += 1
 
                     possible = True
