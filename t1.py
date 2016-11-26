@@ -230,7 +230,7 @@ fileFitCit = open("fitCit.csv","w")
 saveFits(fileFitInfo,0,gatt.fitnessGeneration)
 
 for generation in range(1,totalGeneration):
-    print "Generation: %i" %generation
+    print "Generation: %i" %generation 
                                         #C1_OneCuttingPoint   C2_TwoCuttingPoint
     nextGeneration = gatt.evolve(gatt.C1_OneCuttingPoint,0.9,tries=10000,generation=generation)
     if not nextGeneration:
