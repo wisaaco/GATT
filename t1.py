@@ -31,7 +31,7 @@ casesOfPM = [
      "tresholdHD": 0.6,
      "tresholdMM":0.75,
 
-     "failure":[0.0015,0.019],
+     "failure":[0.0015*52,0.019*52],
      
      "CPU_idle":124,
      "CPU_full":265,
@@ -51,7 +51,7 @@ casesOfPM = [
      "tresholdHD": 0.6,
      "tresholdMM":0.75,
 
-     "failure":[0.0015,0.019],
+     "failure":[0.0015*52,0.019*52],
      
      "CPU_idle":142,
      "CPU_full":284,
@@ -71,7 +71,7 @@ casesOfPM = [
      "tresholdHD": 0.6,
      "tresholdMM":0.75,
 
-     "failure":[0.0015,0.019],
+     "failure":[0.0015*52,0.019*52],
      
      "CPU_idle":103,
      "CPU_full":147,
@@ -88,28 +88,28 @@ casesOfVM = [
     {"id":1,"Core":4,
      "MM":7.5, #GB
      "HD":0.078125, #TB 80GB
-     "failure":[0.002,0.025]
+     "failure":[0.002*52,0.025*52]
      }, 
     {"id":2,"Core":8,
      "MM":15, #GB
      "HD":0.1562, #TB 160GB
-     "failure":[0.002,0.025]
+     "failure":[0.002*52,0.025*52]
      },
     {"id":3,"Core":16,
      "MM":30, #GB
      "HD":0.3125, #TB 320GB
-     "failure":[0.002,0.025]},
+     "failure":[0.002*52,0.025*52]},
     {"id":4,"Core":4,
      "MM":15, #GB
      "HD":0.078125, #TB 80GB
-     "failure":[0.002,0.025]}  ,
+     "failure":[0.002*52,0.025*52]}  ,
     {"id":5,"Core":8,
      "MM":30, #GB
      "HD":0.1562, #TB 160GB
-     "failure":[0.002,0.025]}
+     "failure":[0.002*52,0.025*52]}
 ]
 
-test = { 1:[{"1":10,"2":34},30],2:[30,60],10:[10,30]}
+#test = { 1:[{"1":10,"2":34},30],2:[30,60],10:[10,30]}
 
 
 #==============================================================================
@@ -122,43 +122,55 @@ environment = {
     "replicationFactor" : 3,
     "sizeBlock": 64, #MB
     
-    "numberOfPM": 20,
-    "numberFile": random.randint(10,45),
-#    "numberOfJobs": #random.randint(10,20) 
-  
+    "numberOfPM": 22,
+    "numberJobs": 10 # 1585 #random.randint(10,45),
 }
-environment["numberOfJobs"]=environment["numberFile"] #TODO BORRAR FUTURO
 
 environment["PM"] = np.random.choice(casesOfPM,environment["numberOfPM"]) #Nice: p=[.33,.33,.33]
 
-#DEFINITION OF JOBS
-# Jobs 
-#fjobs = np.random.choice(environment["numberFile"],environment["numberOfJobs"]) #TODO AGGGRE FUTURO
-fjobs = np.array(range(environment["numberOfJobs"]))
+
+#Distribución de uso de ficheros sobre los diferentes trabajos
+alpha= 0.83
+r2= 3
+p = np.random.power(alpha,environment["numberJobs"])
+p = np.multiply(p,r2).astype(int) #Este valor se corta a entero menor perdemos una repeticion
+
+filesUsedInJob = []
+for ix in range(environment["numberJobs"]):
+    filesUsedInJob.append(
+#    np.hstack(([ix],np.random.choice(environment["numberJobs"],p[ix]))) #La perticion perdida se asigna al jobs
+      np.hstack(([ix]))) #La perticion perdida se asigna al jobs
+#    )
+    
+print "Total Files con repeticion: %i" %np.sum(np.add(p,1))
+print "Total Trabajos: %i " %environment["numberJobs"]
 
 
+#TOTALBLOQUES = 500/environment["replicationFactor"]
+a, m  = 1.1,0.5
+sizeFiles = []
+for ix in range(environment["numberJobs"]):
+    sizeFiles.append(int(np.random.pareto(a)*m)+1)
+    
+print "Total bloques: %i " %np.sum(sizeFiles)
+print "Total bloques con Replic Factor: %i " %(np.sum(sizeFiles)*environment["replicationFactor"])
+#Caracteristicas de los jobs
+#Tiempo de ejecución
 mu, sigma = 4.32, 1.31 # mean and standard deviation
-tExecution = np.random.lognormal(mu, sigma,environment["numberOfJobs"])
+tExecution = np.random.lognormal(mu, sigma,environment["numberJobs"])
 tExecution = np.multiply(tExecution,1000)
-jobs = np.array([np.random.uniform(0,1,environment["numberOfJobs"]), #Frecuencia de llegadas
+
+#Mismo ratio de llegada de todos los trabajos
+lambda_arrivalRate= 45/float(environment["numberJobs"])
+arrivalRate_job =  np.linspace(lambda_arrivalRate/environment["numberJobs"],lambda_arrivalRate/environment["numberJobs"],environment["numberJobs"]).astype(float)
+arrivalRate_job = np.divide(arrivalRate_job,60000)
+
+jobs = np.array([arrivalRate_job , #Frecuencia de llegadas
                  tExecution, #tCPU (ms) 
-                 [int(random.uniform(0, 1)*10) for _ in range(environment["numberOfJobs"])], #Capcity MM (MB) int
-                 [random.uniform(0, 1) for _ in range(environment["numberOfJobs"])],#tHD (ms)
-                 fjobs, #ID de files
-                 ]).T
-
-jobArrivalRate = 455/60000.0                
-seqAR =  np.linspace(jobArrivalRate/environment["numberOfJobs"],jobArrivalRate/environment["numberOfJobs"],environment["numberOfJobs"]).astype(float)
-
-
-
-jobs = np.array([seqAR , #Frecuencia de llegadas
-                 [random.uniform(0, 1) for _ in range(environment["numberOfJobs"])], #tCPU (ms) 
-                 [int(random.uniform(0, 1)*10) for _ in range(environment["numberOfJobs"])], #Capcity MM (MB) int
-                 [random.uniform(0, 1) for _ in range(environment["numberOfJobs"])],#tHD (ms)
-                 fjobs, #ID de files
+                 [int(random.uniform(0, 1)*10) for _ in range(environment["numberJobs"])], #Capcity MM (MB) int
+                 [random.uniform(0, 1) for _ in range(environment["numberJobs"])],#tHD (ms)
                  ]).T           
-                     
+                  
                  
                  
 def uCPU(job):
@@ -174,28 +186,16 @@ def getU(job):
 #DEFINITION OF FILES 
 #Update: Tan solo se definen los ficheros que se usarán
 #Tamaño en bloques de cada uno de los ficheros 
-TOTALBLOQUES = 16384/environment["replicationFactor"]
-TOTALBLOQUES = 500/environment["replicationFactor"]
-totalBloquesFile = TOTALBLOQUES/environment["numberOfJobs"]
-
-
-rjobs = np.bincount(fjobs) #in order
-fileU = range(len(fjobs))
-sizeFiles = range(len(fjobs))
-for idx,value in enumerate(rjobs):
-    if (value!=0):
-        ids = np.where(fjobs==idx) #Donde aparece el fichero en JOB
-        u = np.array([0,0,0])
-#        size = random.randint(1,10) #TODO 
-        size = totalBloquesFile
-        for i in ids[0]: #Para cada JOB se calcula la utilización
-            u = np.add(u,getU(jobs[i]))
-        for i in ids[0]: #Para cada aparición se inserta la utilización
-            fileU[i] = [row for row in u]
-            sizeFiles[i]=size
-            
+#TOTALBLOQUES = 16384/environment["replicationFactor"]
+#totalBloquesFile = TOTALBLOQUES/environment["numberOfJobs"]
+fileU = []
+for idx,value in enumerate(filesUsedInJob):
+    u = np.array([0,0,0])
+    for fileID in value:
+        u = np.add(u,getU(jobs[idx]))
+    fileU.append([row for row in u])
 fileU = np.array(fileU)         
-environment["JOBS"] = jobs 
+#environment["JOBS"] = jobs 
 environment["sizeFiles"] = sizeFiles
 environment["fileU"] = fileU
 
@@ -215,8 +215,8 @@ def saveFits(f,generation,fitInfo):
 #==============================================================================
 
 mutationHappen = 0.08 #p que ocurra
-sizePopulation = 100 # different VM
-totalGeneration = 200
+sizePopulation = 20 # different VM
+totalGeneration = 300
 
 gatt = g.GATT(environment,casesOfVM,seed=100)
 gatt.population(sizePopulation)
@@ -224,7 +224,8 @@ gatt.population(sizePopulation)
 
 fileProb = open("prob.csv","w")
 fileFitInfo = open("fits.csv","wr")
-fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,fitValue,Max_CVM,Min_CVM,Mean_CVM,HWmax,HWmin,HPmax,HPmin,HFmax,HFmin,NP,\n")
+# fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,fitValue,Max_CVM,Min_CVM,Mean_CVM,HWmax,HWmin,HPmax,HPmin,HFmax,HFmin,NP,Fit_maxPareto,Fit_meanPareto,\n")
+fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,Max_CVM,Mean_CVM,Min_CVM,Fit_maxPareto,Fit_meanPareto,fitValue,NWmax,NWmin,NPmax,NPmin,NFmax,NFmin,NWmean,NPmean,NFmean\n")
 fileFitCit = open("fitCit.csv","w")
 
 saveFits(fileFitInfo,0,gatt.fitnessGeneration)

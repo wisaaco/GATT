@@ -101,7 +101,7 @@ class GATT:
        
         
     def __getMinSetVM(self):   
-       numberVM = self.ce["replicationFactor"]*50
+       numberVM = self.ce["replicationFactor"]
        setVM = np.random.choice(self.casesOfVM,numberVM)
        while not self.__isSuitable(setVM):
            numberVM +=1
@@ -111,8 +111,10 @@ class GATT:
        for i in range(numberVM):
            cvm[i]=[setVM[i],-1]
        return cvm
-        
-    
+       # cvm = {}
+       # cvm[0]=[setVM[0], -1]
+       # return cvm
+
     def __demand(self,vmID,cbl,cbl_idf):
         indVM = np.where(cbl==vmID)
         uVM = [0,0,0]
@@ -429,12 +431,12 @@ class GATT:
         cvm = self.__getMinSetVM()
 
         self.logger.info('\t Initial Estimation  of virtal machines: %i' %len(cvm))
-#        print "Número de máquinas virtuales min: %i" %len(setVM)
+        print "Número de máquinas virtuales min: %i" %len(cvm)
         
         self.fit = np.zeros(size)
         #create citizens        
         for idCiti in range(size):
-#            print "Creando citizen: %i" %idCiti
+            print "Creando citizen: %i" %idCiti
             self.logger.info('\t Creating Citizen: %i' %idCiti)
             
             #Asignación de bloques a MV
@@ -456,13 +458,16 @@ class GATT:
                      tries = self.__defaultTries
                      while vmi in previousVMI  or not self.__cbl_availability(vmi,cvm,idFile,cvm_u):
                          vmi = np.random.choice(cvm.keys(), 1)[0]
+                         # print vmi
                          tries-=1
                          if tries==0:
                              self.logger.info('\t\t ADDING a new VM')
                              idN = max(cvm.keys())+1
-                             cvm[idN] = [np.random.choice(self.casesOfVM,1),1]
-                             cvm_u[idN] = [0,0,0]
+                             cvm[idN] = [np.random.choice(self.casesOfVM,1).tolist()[0],-1]
+                             cvm_u[idN] = [[0,0,0]]
+                             print "new vm: %i" %idN
                              tries = self.__defaultTries
+                             vmi = idN
              
                      cbl[idc]= vmi 
                      cbl_idf[idc] = idFile
@@ -526,29 +531,29 @@ class GATT:
         Fmax = np.max(frentePareto[:,2])
         Fmin = np.min(frentePareto[:,2])
 
-        self.Wmax = max(self.Wmax,Wmax)
-        self.Wmin = min(self.Wmin,Wmin)
-        self.Pmax = max(self.Pmax,Pmax)
-        self.Pmin = min(self.Pmin,Pmin)
-        self.Fmax = max(self.Fmax,Fmax)
-        self.Fmin = min(self.Fmin,Fmin)
+        # self.Wmax = max(self.Wmax,Wmax)
+        # self.Wmin = min(self.Wmin,Wmin)
+        # self.Pmax = max(self.Pmax,Pmax)
+        # self.Pmin = min(self.Pmin,Pmin)
+        # self.Fmax = max(self.Fmax,Fmax)
+        # self.Fmin = min(self.Fmin,Fmin)
 
         Wmean = np.mean(frentePareto[:,0])
         Pmean = np.mean(frentePareto[:,1])
         Fmean = np.mean(frentePareto[:,2])
 
         if Fmax == Fmin :
-            Fmax = 1
-            Fmin = 0
+            Fmax *=1.1
+            Fmin *=0.90
 
 
         if Wmax == Wmin :
-            Wmax = 1
-            Wmin = 0
+            Wmax *=1.1
+            Wmin *=0.90
 
         if Pmax == Pmin :
-            Pmax = 1
-            Pmin = 0
+            Pmax *=1.1
+            Pmin *=0.90
 
 
 
@@ -564,16 +569,18 @@ class GATT:
         #          p.append(fit_values[idx][1])
         #          f.append(fit_values[idx][2])
 
-#CARLOS
-        #EN ESTE PUNTO SE NORMALIZA EL FITNES DE CADA CIUDADANO, en el ARRAY DE FIT
-
+        # Coger maximo y media de fit. citizen que este frente pareto
+        valuesFitFromPareto = []
         self.fit = []
         for idx,cit in enumerate(self.pop):
                 cvm_count.append(len(self.pop[idx]["cvm"]))
 
-                valueFit = (self.pop[idx]["fit_value"][0] / (3 * (Wmax - Wmin)) +
-                            self.pop[idx]["fit_value"][1] / (3 * (Pmax - Pmin)) +
-                            self.pop[idx]["fit_value"][2] / (3 * (Fmax - Fmin)))
+                valueFit = (self.pop[idx]["fit_value"][0] - Wmin / (3 * (Wmax - Wmin)) +
+                            self.pop[idx]["fit_value"][1] - Pmin / (3 * (Pmax - Pmin)) +
+                            self.pop[idx]["fit_value"][2] - Fmin / (3 * (Fmax - Fmin)))
+
+                if fit_values[idx] in frentePareto:
+                    valuesFitFromPareto.append(valueFit)
 
                 self.fit.append(valueFit)
 
@@ -587,10 +594,11 @@ class GATT:
                 #                  self.pop[idx]["fit_value"][2] -Fmin / (Fmax - Fmin)))
                 # self.fit.append(random.random())
 
-        return  [Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,np.min(self.fit),np.max(cvm_count),np.min(cvm_count),np.mean(cvm_count),
-                 self.Wmax,self.Wmin,self.Pmax,self.Pmin,self.Fmax,self.Fmin]
-
-        
+        # return  [Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,np.min(self.fit),np.max(cvm_count),np.min(cvm_count),np.mean(cvm_count),
+        #          self.Wmax,self.Wmin,self.Pmax,self.Pmin,self.Fmax,self.Fmin,np.max(valuesFitFromPareto),np.mean(valuesFitFromPareto)]
+        return [Wmax, Wmin, Pmax, Pmin, Fmax, Fmin, Wmean, Pmean, Fmean,np.max(cvm_count),np.mean(cvm_count),np
+            .min(cvm_count),np.max(valuesFitFromPareto),np.mean(valuesFitFromPareto),np.min(self.fit),
+                Wmax/ (3 * (Wmax - Wmin)), Wmin/ (3 * (Wmax - Wmin)), Pmax/ (3 * (Wmax - Wmin)), Pmin/ (3 * (Wmax - Wmin)), Fmax/ (3 * (Wmax - Wmin)), Fmin/ (3 * (Wmax - Wmin)), Wmean/ (3 * (Wmax - Wmin)), Pmean/ (3 * (Wmax - Wmin)), Fmean/ (3 * (Wmax - Wmin))]
 
     def dominates(self,row, rowCandidate):
         return all(r >= rc for r, rc in zip(row, rowCandidate))
@@ -702,19 +710,20 @@ class GATT:
         #Se eligen origen y destino
         orig = np.random.choice(cvm.keys(),1)[0] #La posición 22, tiene una máquina virtual del tipo: cvm[orig]["id"]
         dest = np.random.choice(cvm.keys(),1)[0]
-
+        tries = self.__defaultTries
         previousSelection = set()
         while (dest in previousSelection
                or orig == dest
+               or tries <0
                or cvm[dest][0]["id"] == cvm[orig][0]["id"]
                or not self.__is_SWAP_MV_suitable(orig,dest,cvm,cbl,cbl_idf)):
             previousSelection.add(dest)
             dest = np.random.choice(cvm.keys(), 1)[0]
-            if len(previousSelection)==len(self.casesOfVM):
-#                print "[Warning] No hay ninguna VM-PM que soporte: M3-swap"
-                dest = -1
+            tries -= 1
+            if len(previousSelection)==len(self.casesOfVM) or tries<0:
+                print "[Warning] No hay ninguna VM-PM que soporte: M3-swap"
                 return None,"M3-SWAP_VM: Fallido"
-        if dest >=0: #Todo ha ido bien
+        if tries >=0: #Todo ha ido bien
 #            print "Swap OK: MV:%i  <-=-> MV:%i " %(orig,dest)
             self.logger.debug("\t\t\t SWAP VMo: %i <--> VMd: %i" %(orig,dest))
             #En cada se intercambia el ID de la VM
