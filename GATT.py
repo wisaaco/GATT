@@ -7,7 +7,8 @@ Created on Wed Nov 16 09:07:09 2016
 
 import logging
 import numpy as np
-import random 
+import random
+import math
 
 
 #logging.basicConfig(filename='gatt.log',level=logging.DEBUG)
@@ -30,21 +31,21 @@ class GATT:
     """ Operations """
     def __init__(self,environment,casesOfVM,seed):
         random.seed(seed)
+        np.random.seed(seed)
+
         self.pop = {}
         self.ce = environment
         self.casesOfVM = casesOfVM
         self.__vm_ID = 0
-        #self.logger = logging.getLogger(__name__)
-        #self.logger.setLevel(logging.INFO)
-        
-        # create a file handler
-        # handler = logging.FileHandler('gatt.log')
-        # handler.setLevel(logging.INFO)
-        # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        # handler.setFormatter(formatter)
-        #self.logger.addHandler(handler)
-        #self.logger.info("Hello baby: I'm crazy")
 
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        handler = logging.FileHandler('gatt.log')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+        self.logger.info("Hello baby: I'm crazy")
+        self.logger.debug("Hello baby: I'm crazy")
         # self.Wmax = -1
         # self.Wmin = 9999999
         # self.Pmax = -1
@@ -100,12 +101,15 @@ class GATT:
        return True    
        
         
-    def __getMinSetVM(self):   
+    def __getMinSetVM(self):
+
+
        numberVM = self.ce["replicationFactor"]
        setVM = np.random.choice(self.casesOfVM,numberVM)
-       while not self.__isSuitable(setVM):
-           numberVM +=1
-           setVM = np.random.choice(self.casesOfVM,numberVM)
+       # while not self.__isSuitable(setVM):
+       #     numberVM +=1
+       #     setVM = np.random.choice(self.casesOfVM,numberVM)
+
 
        cvm = {}
        for idx,vmi in enumerate(range(self.__vm_ID,self.__vm_ID+numberVM)):
@@ -165,7 +169,7 @@ class GATT:
 
     def __space_availabilityPM(self,pmi,cvm,vmID,cbl,cbl_idf):
         #La demanda de la VM
-        #self.logger.info("\t\t Space disponible en PM: %i" %pmi)
+        self.logger.info("\t\t Space disponible en PM: %i" %pmi)
         #Atraves de los bloques - Files - Demanda /3
         uVMnew = self.__demand(vmID,cbl,cbl_idf)
         #Hemos de contabilizar la demanda que soporta la PMI actualmente, 
@@ -429,7 +433,7 @@ class GATT:
     """ Creating initial Citizens-Chromosomes """
     # size - of population
     def population(self,size):
-        #self.logger.info('**** Population: %s' %size)
+        self.logger.info('**** Population: %s' %size)
         self.population = size
         sizeFiles = self.ce["sizeFiles"]
         totalBlocksWR = np.sum(sizeFiles)*self.ce["replicationFactor"]
@@ -438,15 +442,15 @@ class GATT:
         #create citizens        
         for idCiti in range(size):
             cvm = self.__getMinSetVM()
-            #self.logger.info('\t Initial Estimation  of virtal machines: %i' % len(cvm))
+            self.logger.info('\t Initial Estimation  of virtal machines: %i' % len(cvm))
             # print "Número de máquinas virtuales min: %i" % len(cvm)
 
             print "Creando citizen: %i" %idCiti
-            #self.logger.info('\t Creating Citizen: %i' %idCiti)
+            self.logger.info('\t Creating Citizen: %i' %idCiti)
             
             #Asignación de bloques a MV
 #            print "\tAsignación de BLQ a MV"
-            #self.logger.info('\t\t Adding BLQ to VM')
+            self.logger.info('\t\t Adding BLQ to VM')
             cbl = np.linspace(-1,-1,totalBlocksWR).astype(int) #un array init. de -1
 
             cvm_u ={}
@@ -466,7 +470,7 @@ class GATT:
                          # print vmi
                          tries-=1
                          if tries==0:
-                             #self.logger.info('\t\t ADDING a new VM')
+                             self.logger.info('\t\t ADDING a new VM')
                              idN = self.__vm_ID
                              print self.__vm_ID
                              self.__vm_ID +=1
@@ -483,12 +487,12 @@ class GATT:
                      previousVMI.append(vmi)
                      cvm_u[vmi] = np.add(self.ce["fileU"][idFile]/self.ce["replicationFactor"],cvm_u[vmi])
 
-            #self.logger.info('\t\t Final number of virtal machines: %i' %len(cvm))
+            self.logger.info('\t\t Final number of virtal machines: %i' %len(cvm))
 #            if len(np.where(cbl==len(setVM)))>0: print "[ERROR] Desconocido cbl[j]= VMi>Len(setVM)"
 
             cvm_u = None
             #Asignación de MV a PM
-            #self.logger.info('\t\t Asignación de MV a MP')
+            self.logger.info('\t\t Asignación de MV a MP')
             totalPM = self.ce["numberOfPM"]
             for vmi in cvm.keys():
                 pmi = random.randint(0,totalPM-1)
@@ -498,7 +502,7 @@ class GATT:
                     print pmi
                     tries -=1
                     if tries==0: 
-                             #self.logger.error('\t\t No más MP disponibles ') #ESTO NO DEBERIA DE PASAR
+                             self.logger.error('\t\t No más MP disponibles ') #ESTO NO DEBERIA DE PASAR
                              raise NameError('MP-no disponibles')
                 cvm[vmi]= [cvm[vmi][0],pmi]
             
@@ -634,7 +638,7 @@ class GATT:
     """ MUTATIONS on any chromosome  """
     """ M1 -create a new Virtual Machine  """
     def __M1_createVM(self,citizen):
-        #self.logger.info("\t\t Type of Matutation: M1 ")
+        self.logger.info("\t\t Type of Matutation: M1 ")
 
         cvm = citizen["cvm"].copy()
         cbl = citizen["cbl"].copy()
@@ -656,7 +660,7 @@ class GATT:
                 return None,"M1-Create VM: Fallido" 
         if allOK: 
 #            print "OK"
-            #self.logger.debug("\t\t\t New VM on PMi: %i" %pmi)
+            self.logger.debug("\t\t\t New VM on PMi: %i" %pmi)
             # idvm = max(cvm.keys()) + 1
             idvm = self.__vm_ID
             cbl[cbli]=idvm
@@ -671,14 +675,14 @@ class GATT:
         
     """ M2 -remove a Virtual Machine """        
     def __M2_removeVM(self,cit):
-        #self.logger.info("\t\t Type of Matutation: M2 ")
+        self.logger.info("\t\t Type of Matutation: M2 ")
 
         cvm = cit["cvm"].copy()
         cbl = cit["cbl"].copy()
         cbl_idf = cit["cbl_idf"].copy()
 
         if len(cvm)==0:
-            #self.logger.warning("\t\t\t Remove VM - No hay más máquinas")
+            self.logger.warning("\t\t\t Remove VM - No hay más máquinas")
             return None,"M2-REMOVE_VM: No Dispone de más maquinas" 
            
         vmi = np.random.choice(cvm.keys(),1)[0]
@@ -695,8 +699,8 @@ class GATT:
                 return None,"M2-REMOVE_VM: Fallido"
      
         if vmd >=0: #Todo ha ido bien
-            #self.logger.debug("\t\t\t Remove VMo: %i" %vmi)
-            #self.logger.debug("\t\t\t  -- movVMd: %i" %vmd)
+            self.logger.debug("\t\t\t Remove VMo: %i" %vmi)
+            self.logger.debug("\t\t\t  -- movVMd: %i" %vmd)
             np.place(cbl,cbl==vmi,vmd)#Al destino se le asignan los bloques de Ori
 
             del cvm[vmi]
@@ -712,7 +716,7 @@ class GATT:
         
     """ M3 -swap a Virtual Machine """   
     def __M3_swapVM(self,cit):
-        #self.logger.info("\t\t Type of Matutation: M3 ")
+        self.logger.info("\t\t Type of Matutation: M3 ")
 
         cvm = cit["cvm"].copy()
         cbl = cit["cbl"].copy()
@@ -737,7 +741,7 @@ class GATT:
                 return None,"M3-SWAP_VM: Fallido"
         if tries >=0: #Todo ha ido bien
 #            print "Swap OK: MV:%i  <-=-> MV:%i " %(orig,dest)
-            #self.logger.debug("\t\t\t SWAP VMo: %i <--> VMd: %i" %(orig,dest))
+            self.logger.debug("\t\t\t SWAP VMo: %i <--> VMd: %i" %(orig,dest))
             #En cada se intercambia el ID de la VM
 
             np.place(cbl,cbl==orig,-1)
@@ -752,7 +756,7 @@ class GATT:
         
     """ M4 - Move Virtual Machine """   
     def __M4_MoveVM(self,cit):
-        #self.logger.info("\t\t Type of Matutation: M4 ")
+        self.logger.info("\t\t Type of Matutation: M4 ")
 
         cvm = cit["cvm"].copy()
         cbl = cit["cbl"].copy()
@@ -772,7 +776,7 @@ class GATT:
                 return None,"M4-Move_VM: Fallido"
         
         if pmi >=0:
-            #self.logger.debug("\t\t\t MOVE VMo %i  :--> Pmi: %i" %(vmi,pmi))
+            self.logger.debug("\t\t\t MOVE VMo %i  :--> Pmi: %i" %(vmi,pmi))
             cvm[vmi][1] = pmi #Se asgina la CVM a PMI
             cit["cvm"] = cvm
             return cit,"M4-Move_VM: Ok"
@@ -784,7 +788,7 @@ class GATT:
      
     """ M5 - swap a CBL """   
     def __M5_swapCBL(self,cit):   
-        #self.logger.info("\t\t Type of Matutation: M5 ")
+        self.logger.info("\t\t Type of Matutation: M5 ")
 
         cvm = cit["cvm"].copy()
         cbl = cit["cbl"].copy()
@@ -825,7 +829,7 @@ class GATT:
                     z=[]
                     
         if cjj>0:
-            #self.logger.debug("\t\t\t SWAP CBLi: %i <--> CBLj: %i" %(cbli,cjj))
+            self.logger.debug("\t\t\t SWAP CBLi: %i <--> CBLj: %i" %(cbli,cjj))
             vmi = cbl[cbli]  #Se asgina al bloque la nueva VM
             cbl[cbli] = cbl[cjj]
             cbl[cjj] = vmi
@@ -837,7 +841,7 @@ class GATT:
         
     """ M6 - Move value CBL """   
     def __M6_MoveCBL(self,cit):
-        #self.logger.info("\t\t Type of Matutation: M6 ")
+        self.logger.info("\t\t Type of Matutation: M6 ")
 
         cvm = cit["cvm"].copy()
         cbl = cit["cbl"].copy()
@@ -862,7 +866,7 @@ class GATT:
                 return None,"M6-Move_CBL: Fallido"
         
         if vmi >=0:
-            #self.logger.debug("\t\t\t MOVE CBLi %i  :--> VMi: %i" %(cbli,vmi))
+            self.logger.debug("\t\t\t MOVE CBLi %i  :--> VMi: %i" %(cbli,vmi))
 #            print vmi
             cbl[cbli] = vmi #Se asgina al bloque la nueva VM
             cit["cbl"] = cbl
@@ -873,24 +877,45 @@ class GATT:
       
     def mutate(self):
 #        mutations = [self.__M2_removeVM]
-        #self.logger.info("*** Matutation ") #,self.__M4_MoveVM,
+        self.logger.info("*** Matutation ") #,self.__M4_MoveVM,
         mutations = [self.__M1_createVM,self.__M2_removeVM,self.__M3_swapVM,
                      self.__M5_swapCBL,self.__M6_MoveCBL]
         citi = random.randint(0,self.population-1)
 #        print "Ciudadano a mutar: %i" %citi
-        #self.logger.info("\t Citizen: citmut%i "%citi)
+        self.logger.info("\t Citizen: citmut%i "%citi)
         cit = self.pop[citi]
         muti = random.randint(0,len(mutations)-1)
-        #self.logger.info("\t Mutation: mut%i " % muti)
+        self.logger.info("\t Mutation: mut%i " % muti)
         citM,state =  mutations[muti](cit)
         if citM !=None:
-            #self.logger.info("\t\t Mutation status: OK")
+            self.logger.info("\t\t Mutation status: OK")
             self.pop[citi] = citM 
         else:
-            #self.logger.info("\t\t Mutation status: FAILED")
+            self.logger.info("\t\t Mutation status: FAILED")
             None
 
         return state
+
+
+    def mutateCOMP(self,mutationHappen):
+        #        mutations = [self.__M2_removeVM]
+        # self.logger.info("*** Matutation ") #,self.__M4_MoveVM,
+        mutations = [self.__M1_createVM, self.__M2_removeVM, self.__M3_swapVM,
+                     self.__M5_swapCBL, self.__M6_MoveCBL]
+
+        muti = random.randint(0, len(mutations) - 1)
+        for idx in range(self.population):
+            if random.random() <= mutationHappen:
+                print "\tMutando citizen: %i" %idx
+                citM, state = mutations[muti](self.pop[idx])
+                print "\t \t%s"%state
+                if citM != None:
+                    # self.logger.info("\t\t Mutation status: OK")
+                    self.pop[idx] = citM
+                else:
+                    # self.logger.info("\t\t Mutation status: FAILED")
+                    None
+
     
     """ CROSSOVERS """
     def C1_OneCuttingPoint(self,citOri,citDest):
@@ -989,7 +1014,8 @@ class GATT:
       
     """ Evolve operation """
     def evolve(self,crossoverfunction,crossover_treshold,tries,generation):
-        #self.logger.info("*** Evolution: ev%i" %generation)
+        cross = [self.C1_OneCuttingPoint, self.C2_TwoCuttingPoint]
+        self.logger.info("*** Evolution: ev%i" %generation)
         #Preparing probabilities of each citizen
 
         candidates = np.sort(self.fit)
@@ -1023,7 +1049,7 @@ class GATT:
                 allOk -= 1
 
             if not [citOri,citDest] in previousNoFactibleFathers:
-                # #self.logger.debug("\t Crossing parents: %i - %i" %(citOri,citDest))
+                self.logger.debug("\t Crossing parents: %i - %i" %(citOri,citDest))
                 # print "Crossing parents: %i - %i" %(citOri,citDest)
                 #Applying one crossover
 
@@ -1035,7 +1061,7 @@ class GATT:
                     #==============================================================================
 
 
-                    h1_cvm,h1_cbl,h1_cbl_idf,h2_cvm,h2_cbl,h2_cbl_idf = crossoverfunction(citOri,citDest)
+                    h1_cvm,h1_cbl,h1_cbl_idf,h2_cvm,h2_cbl,h2_cbl_idf = cross[crossoverfunction](citOri,citDest)
 
                     #print "DEBUG %i" % countDebug
                     countDebug += 1
@@ -1054,7 +1080,7 @@ class GATT:
                         if not possible: break
                     
                     if possible:
-                        #self.logger.debug("\t Creating two new citizens")
+                        self.logger.info("\t Creating two new citizens")
 
                         fitness_values1 = self.get_fitness_citizen(h1_cvm,h1_cbl,h1_cbl_idf)
                         future_population[citizenid] = {"cvm":h1_cvm,"cbl":h1_cbl,
@@ -1069,7 +1095,7 @@ class GATT:
                         previousNoFactibleFathers.append([citOri,citDest])                         
                 else: #No crossover
                     if not np.any(future_population.values() == citM) and not np.any(future_population.values() == citF):
-                        #self.logger.debug("\t Populating with parents")
+                        self.logger.debug("\t Populating with parents")
                         future_population[citizenid] = citM
                         citizenid+=1
                         future_population[citizenid] = citF
@@ -1098,97 +1124,18 @@ class GATT:
         # Preparing probabilities of each citizen
 
         candidates = np.sort(self.fit)
-        fitness_cut_value = int(len(candidates) * 0.05) + 1  # mayor o igual se salvan: representan el 95%
+        fitness_cut_value = math.ceil(len(candidates) * 0.05)  # mayor o igual se salvan: representan el 95%
 
-        citizensOver95 = np.where(self.fit>=fitness_cut_value)[0]
-
-        # p_candidates = []
-        # p_cand = []
-        # for value in candidates: p_candidates.append(1 / (value / np.sum(candidates)))
-        # for value in p_candidates: p_cand.append(value / np.sum(p_candidates))
-        # self.probFitness = p_cand
-
-        # Creación de una nueva población
-        citizenid = 0
+        citizensOver95 = np.where(self.fit>=candidates[fitness_cut_value])[0]
         allOk = tries
-        previousNoFactibleFathers = []
+        citizenid = 0
         future_population = {}
-        countDebug = 0
         while citizenid < self.population and allOk >= 0:
-            # ==============================================================================
-            # #Seleccion: Roulette-wheel selection
-            # ==============================================================================
-            # Los mejores están mas cerca del cero
-
-            candys = np.random.choice(citizensOver95, 2, replace=False)
-
-            citOri = np.where(self.fit == candys[0])[0][0]
-            citDest = np.where(self.fit == candys[1])[0][0]
-
-            while citOri == citDest and allOk>=0:
-                candys = np.random.choice(citizensOver95, 2, replace=False)
-                citOri = np.where(self.fit == candys[0])[0][0]
-                citDest = np.where(self.fit == candys[1])[0][0]
-                allOk-=1
-
-            if not [citOri, citDest] in previousNoFactibleFathers:
-                # #self.logger.debug("\t Crossing parents: %i - %i" %(citOri,citDest))
-                # print "Crossing parents: %i - %i" %(citOri,citDest)
-                # Applying one crossover
-
-                citM = self.pop[citOri]
-                citF = self.pop[citDest]
-                if random.random() < crossover_treshold:
-                    # ==============================================================================
-                    # CrossOverS
-                    # ==============================================================================
-
-
-                    h1_cvm, h1_cbl, h1_cbl_idf, h2_cvm, h2_cbl, h2_cbl_idf = crossoverfunction(citOri, citDest)
-
-                    # print "DEBUG %i" % countDebug
-                    countDebug += 1
-
-                    possible = True
-                    for pmi in range(self.ce["numberOfPM"]):
-                        upmih1 = self.__getUtilizationPM(pmi, h1_cvm, h1_cbl, h1_cbl_idf)
-                        upmih2 = self.__getUtilizationPM(pmi, h2_cvm, h2_cbl, h2_cbl_idf)
-                        uMax = self.__getMaxUtilizationPM(pmi)
-                        if uMax[0] < upmih1[0]: possible = False
-                        if uMax[2] < self.blockToTeras(upmih1[2]): possible = False
-                        if uMax[1] < self.MbToGB(upmih1[1]): possible = False
-                        if uMax[0] < upmih2[0]: possible = False
-                        if uMax[2] < self.blockToTeras(upmih2[2]): possible = False
-                        if uMax[1] < self.MbToGB(upmih2[1]): possible = False
-                        if not possible: break
-
-                    if possible:
-                        # self.logger.debug("\t Creating two new citizens")
-
-                        fitness_values1 = self.get_fitness_citizen(h1_cvm, h1_cbl, h1_cbl_idf)
-                        future_population[citizenid] = {"cvm": h1_cvm, "cbl": h1_cbl,
-                                                        "cbl_idf": h1_cbl_idf, "fit_value": fitness_values1}
-
-                        citizenid += 1
-                        fitness_values2 = self.get_fitness_citizen(h2_cvm, h2_cbl, h2_cbl_idf)
-                        future_population[citizenid] = {"cvm": h2_cvm, "cbl": h2_cbl,
-                                                        "cbl_idf": h2_cbl_idf, "fit_value": fitness_values2}
-                        citizenid += 1
-                    else:
-                        previousNoFactibleFathers.append([citOri, citDest])
-                else:  # No crossover
-                    if not np.any(future_population.values() == citM) and not np.any(
-                                    future_population.values() == citF):
-                        # self.logger.debug("\t Populating with parents")
-                        future_population[citizenid] = citM
-                        citizenid += 1
-                        future_population[citizenid] = citF
-                        citizenid += 1
-                        # Padres anteriormente contrastados
-            else:
-                allOk -= 1  # Evitar bucle infinito
-
+            candy = np.random.choice(citizensOver95, 1, replace=False)[0]
+            future_population[citizenid] = self.pop[candy]
+            citizenid += 1
         # Endwhile
+
         # Se sustituye la población actual por la nueva
         if allOk >= 0:
             self.pop = future_population
@@ -1197,22 +1144,6 @@ class GATT:
             return True
         else:
             return False
-            # print future_population
-        #        print len(future_population)
-        #        print allOk
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
