@@ -122,9 +122,9 @@ casesOfVM = [
 environment = {
     "replicationFactor" : 3,
     "sizeBlock": 64, #MB
-    
-    "numberOfPM": 20,
-    "numberJobs": 1585 #random.randint(10,45),
+
+    "numberOfPM": 400,  # 600,
+    "numberJobs": 6340  # 95109 #random.randint(10,45),
 }
 
 environment["PM"] = np.random.choice(casesOfPM,environment["numberOfPM"]) #Nice: p=[.33,.33,.33]
@@ -148,7 +148,7 @@ print "Total Trabajos: %i " %environment["numberJobs"]
 
 
 #TOTALBLOQUES = 500/environment["replicationFactor"]
-a, m  = 1.1,0.5
+a, m  = 1.01,0.005
 sizeFiles = []
 for ix in range(environment["numberJobs"]):
     sizeFiles.append(int(np.random.pareto(a)*m)+1)
@@ -157,7 +157,7 @@ print "Total bloques: %i " %np.sum(sizeFiles)
 print "Total bloques con Replic Factor: %i " %(np.sum(sizeFiles)*environment["replicationFactor"])
 #Caracteristicas de los jobs
 #Tiempo de ejecución
-mu, sigma = 4.32, 1.31 # mean and standard deviation
+mu, sigma = 4.29, 1.44*1.44# mean and standard deviation
 tExecution = np.random.lognormal(mu, sigma,environment["numberJobs"])
 tExecution = np.multiply(tExecution,1000)
 
@@ -220,7 +220,7 @@ mutationHappen = 0.5 #p que ocurra
 totalGeneration = 160
 
 
-clustersize="low"
+clustersize="comp"
 
 
 
