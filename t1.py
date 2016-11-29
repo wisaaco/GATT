@@ -199,7 +199,7 @@ fileU = np.array(fileU)
 #environment["JOBS"] = jobs 
 environment["sizeFiles"] = sizeFiles
 environment["fileU"] = fileU
-
+# print
 #==============================================================================
 # 
 #==============================================================================
