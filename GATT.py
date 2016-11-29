@@ -38,14 +38,15 @@ class GATT:
         self.casesOfVM = casesOfVM
         self.__vm_ID = 0
 
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
-        handler = logging.FileHandler('gatt.log')
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
-        self.logger.info("Hello baby: I'm crazy")
-        self.logger.debug("Hello baby: I'm crazy")
+        self.logger = logging.getLogger("my_logger")
+        if not self.logger.handlers:
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            handler = logging.FileHandler('gatt.log')
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
+            self.logger.setLevel(logging.INFO)
+            self.logger.info("Hello baby: I'm getting crazy")
+
         # self.Wmax = -1
         # self.Wmin = 9999999
         # self.Pmax = -1
