@@ -123,8 +123,8 @@ environment = {
     "replicationFactor" : 3,
     "sizeBlock": 64, #MB
     
-    "numberOfPM": 20, #600,
-    "numberJobs": 1585 #95109 #random.randint(10,45),
+    "numberOfPM": 400, #600,
+    "numberJobs": 6340 #95109 #random.randint(10,45),
 }
 
 environment["PM"] = np.random.choice(casesOfPM,environment["numberOfPM"]) #Nice: p=[.33,.33,.33]
@@ -148,8 +148,9 @@ print "Total Trabajos: %i " %environment["numberJobs"]
 
 
 #TOTALBLOQUES = 500/environment["replicationFactor"]
-a, m  = 1.1,0.5
+# a, m  = 1.1,0.5
 # a, m  = 1.001,0.005
+a, m  = 1.01,0.005
 sizeFiles = []
 for ix in range(environment["numberJobs"]):
     sizeFiles.append(int(np.random.pareto(a)*m)+1)
@@ -159,12 +160,13 @@ print "Total bloques con Replic Factor: %i " %(np.sum(sizeFiles)*environment["re
 #Caracteristicas de los jobs
 #Tiempo de ejecución
 # mu, sigma = 96.91, 445.72# mean and standard deviation
-mu, sigma = 4.32, 1.31 # mean and standard deviation
+# mu, sigma = 4.32, 1.31 # mean and standard deviation
+mu, sigma = 4.29, 1.44*1.44
 tExecution = np.random.lognormal(mu, sigma,environment["numberJobs"])
-tExecution = np.multiply(tExecution,1000)
+# tExecution = np.multiply(tExecution,1000)
 
 #Mismo ratio de llegada de todos los trabajos
-lambda_arrivalRate= 0.44/float(environment["numberJobs"]) # por minuto
+lambda_arrivalRate= 4.26/float(environment["numberJobs"]) # por minuto
 arrivalRate_job =  np.linspace(lambda_arrivalRate/environment["numberJobs"],lambda_arrivalRate/environment["numberJobs"],environment["numberJobs"]).astype(float)
 arrivalRate_job = np.divide(arrivalRate_job,60000)
 
@@ -177,7 +179,7 @@ jobs = np.array([arrivalRate_job , #Frecuencia de llegadas
                  
                  
 def uCPU(job):
-    return job[0]* job[1] #*1000
+    return job[0]* job[1] *1000
 def uMM(job):
     return job[0]* job[2]
 def uHD(job):
@@ -218,10 +220,10 @@ def saveFits(f,generation,fitInfo):
 #==============================================================================
 
 mutationHappen = 0.08 #p que ocurra
-sizePopulation = 20 # different VM 20
+# sizePopulation = 20 # different VM 20
 totalGeneration = 160
 
-clustersize="low"
+clustersize="med"
 
 maxIteration = 10
 

@@ -1120,21 +1120,30 @@ class GATT:
 
     """ Evolve operation COMPARATIVA ESTUDIO """
 
-    def evolveCOMP(self, crossoverfunction, crossover_treshold, tries, generation):
+    def evolveCOMP(self, crossover_treshold, tries, generation):
         # self.logger.info("*** Evolution: ev%i" %generation)
         # Preparing probabilities of each citizen
 
         candidates = np.sort(self.fit)
-        fitness_cut_value = math.ceil(len(candidates) * 0.05)  # mayor o igual se salvan: representan el 95%
 
-        citizensOver95 = np.where(self.fit>=candidates[fitness_cut_value])[0]
+        fitness_cut_value = math.ceil(len(candidates) * 0.05)  # mayor o igual se salvan: representan el 95%
+        valueCut = candidates[fitness_cut_value]
+
+        candidates = np.sort(self.fit)
+        p_candidates = []
+        p_cand = []
+        for value in candidates: p_candidates.append(1/(value/np.sum(candidates)))
+        for value in p_candidates: p_cand.append(value/np.sum(p_candidates))
+
         allOk = tries
         citizenid = 0
         future_population = {}
-        while citizenid < self.population and allOk >= 0:
-            candy = np.random.choice(citizensOver95, 1, replace=False)[0]
-            future_population[citizenid] = self.pop[candy]
-            citizenid += 1
+        while citizenid < self.population and allOk >= 0 :
+            candy = np.random.choice(candidates, 1, replace=False, p=p_cand)[0]
+            if candy>=valueCut:
+                citOri = np.where(self.fit == candy)[0][0]
+                future_population[citizenid] = self.pop[citOri]
+                citizenid += 1
         # Endwhile
 
         # Se sustituye la población actual por la nueva
