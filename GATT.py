@@ -1010,9 +1010,18 @@ class GATT:
             # #Seleccion: Roulette-wheel selection
             #==============================================================================
             #Los mejores están mas cerca del cero
+
             candys = np.random.choice(candidates,2,replace=False,p=p_cand)
+
             citOri = np.where(self.fit==candys[0])[0][0]
             citDest = np.where(self.fit==candys[1])[0][0]
+
+            while citOri == citDest and allOk>=0:
+                candys = np.random.choice(candidates, 2, replace=False, p=p_cand)
+                citOri = np.where(self.fit == candys[0])[0][0]
+                citDest = np.where(self.fit == candys[1])[0][0]
+                allOk -= 1
+
             if not [citOri,citDest] in previousNoFactibleFathers:
                 # #self.logger.debug("\t Crossing parents: %i - %i" %(citOri,citDest))
                 # print "Crossing parents: %i - %i" %(citOri,citDest)
@@ -1081,6 +1090,132 @@ class GATT:
        #print future_population
 #        print len(future_population)     
 #        print allOk
+
+    """ Evolve operation COMPARATIVA ESTUDIO """
+
+    def evolveCOMP(self, crossoverfunction, crossover_treshold, tries, generation):
+        # self.logger.info("*** Evolution: ev%i" %generation)
+        # Preparing probabilities of each citizen
+
+        candidates = np.sort(self.fit)
+        fitness_cut_value = int(len(candidates) * 0.05) + 1  # mayor o igual se salvan: representan el 95%
+
+        citizensOver95 = np.where(self.fit>=fitness_cut_value)[0]
+
+        # p_candidates = []
+        # p_cand = []
+        # for value in candidates: p_candidates.append(1 / (value / np.sum(candidates)))
+        # for value in p_candidates: p_cand.append(value / np.sum(p_candidates))
+        # self.probFitness = p_cand
+
+        # Creación de una nueva población
+        citizenid = 0
+        allOk = tries
+        previousNoFactibleFathers = []
+        future_population = {}
+        countDebug = 0
+        while citizenid < self.population and allOk >= 0:
+            # ==============================================================================
+            # #Seleccion: Roulette-wheel selection
+            # ==============================================================================
+            # Los mejores están mas cerca del cero
+
+            candys = np.random.choice(citizensOver95, 2, replace=False)
+
+            citOri = np.where(self.fit == candys[0])[0][0]
+            citDest = np.where(self.fit == candys[1])[0][0]
+
+            while citOri == citDest and allOk>=0:
+                candys = np.random.choice(citizensOver95, 2, replace=False)
+                citOri = np.where(self.fit == candys[0])[0][0]
+                citDest = np.where(self.fit == candys[1])[0][0]
+                allOk-=1
+
+            if not [citOri, citDest] in previousNoFactibleFathers:
+                # #self.logger.debug("\t Crossing parents: %i - %i" %(citOri,citDest))
+                # print "Crossing parents: %i - %i" %(citOri,citDest)
+                # Applying one crossover
+
+                citM = self.pop[citOri]
+                citF = self.pop[citDest]
+                if random.random() < crossover_treshold:
+                    # ==============================================================================
+                    # CrossOverS
+                    # ==============================================================================
+
+
+                    h1_cvm, h1_cbl, h1_cbl_idf, h2_cvm, h2_cbl, h2_cbl_idf = crossoverfunction(citOri, citDest)
+
+                    # print "DEBUG %i" % countDebug
+                    countDebug += 1
+
+                    possible = True
+                    for pmi in range(self.ce["numberOfPM"]):
+                        upmih1 = self.__getUtilizationPM(pmi, h1_cvm, h1_cbl, h1_cbl_idf)
+                        upmih2 = self.__getUtilizationPM(pmi, h2_cvm, h2_cbl, h2_cbl_idf)
+                        uMax = self.__getMaxUtilizationPM(pmi)
+                        if uMax[0] < upmih1[0]: possible = False
+                        if uMax[2] < self.blockToTeras(upmih1[2]): possible = False
+                        if uMax[1] < self.MbToGB(upmih1[1]): possible = False
+                        if uMax[0] < upmih2[0]: possible = False
+                        if uMax[2] < self.blockToTeras(upmih2[2]): possible = False
+                        if uMax[1] < self.MbToGB(upmih2[1]): possible = False
+                        if not possible: break
+
+                    if possible:
+                        # self.logger.debug("\t Creating two new citizens")
+
+                        fitness_values1 = self.get_fitness_citizen(h1_cvm, h1_cbl, h1_cbl_idf)
+                        future_population[citizenid] = {"cvm": h1_cvm, "cbl": h1_cbl,
+                                                        "cbl_idf": h1_cbl_idf, "fit_value": fitness_values1}
+
+                        citizenid += 1
+                        fitness_values2 = self.get_fitness_citizen(h2_cvm, h2_cbl, h2_cbl_idf)
+                        future_population[citizenid] = {"cvm": h2_cvm, "cbl": h2_cbl,
+                                                        "cbl_idf": h2_cbl_idf, "fit_value": fitness_values2}
+                        citizenid += 1
+                    else:
+                        previousNoFactibleFathers.append([citOri, citDest])
+                else:  # No crossover
+                    if not np.any(future_population.values() == citM) and not np.any(
+                                    future_population.values() == citF):
+                        # self.logger.debug("\t Populating with parents")
+                        future_population[citizenid] = citM
+                        citizenid += 1
+                        future_population[citizenid] = citF
+                        citizenid += 1
+                        # Padres anteriormente contrastados
+            else:
+                allOk -= 1  # Evitar bucle infinito
+
+        # Endwhile
+        # Se sustituye la población actual por la nueva
+        if allOk >= 0:
+            self.pop = future_population
+            # Calculamos fitness de la poblacion
+            self.fitnessGeneration = self.get_Fitness_value()
+            return True
+        else:
+            return False
+            # print future_population
+        #        print len(future_population)
+        #        print allOk
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def statCit(self,citId):
         cit = self.pop[citId]
