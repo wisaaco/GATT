@@ -8,6 +8,7 @@ Created on Thu Nov 17 15:39:05 2016
 import GATT as g
 import numpy as np
 import random
+import time
 
 import matplotlib.pyplot as plt
 
@@ -122,8 +123,8 @@ environment = {
     "replicationFactor" : 3,
     "sizeBlock": 64, #MB
     
-    "numberOfPM": 22,
-    "numberJobs": 10 # 1585 #random.randint(10,45),
+    "numberOfPM": 20,
+    "numberJobs": 1585 #random.randint(10,45),
 }
 
 environment["PM"] = np.random.choice(casesOfPM,environment["numberOfPM"]) #Nice: p=[.33,.33,.33]
@@ -215,18 +216,25 @@ def saveFits(f,generation,fitInfo):
 #==============================================================================
 
 mutationHappen = 0.08 #p que ocurra
-sizePopulation = 20 # different VM
-totalGeneration = 300
+sizePopulation = 10 # different VM
+totalGeneration = 160
+
+start_time = time.time()
+
 
 gatt = g.GATT(environment,casesOfVM,seed=100)
 gatt.population(sizePopulation)
 
 
-fileProb = open("prob.csv","w")
+
 fileFitInfo = open("fits.csv","wr")
+fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,Max_CVM,Min_CVM,Mean_CVM,Fit_maxPareto,fitValue,Fit_meanPareto,\n")
 # fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,fitValue,Max_CVM,Min_CVM,Mean_CVM,HWmax,HWmin,HPmax,HPmin,HFmax,HFmin,NP,Fit_maxPareto,Fit_meanPareto,\n")
-fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,Max_CVM,Mean_CVM,Min_CVM,Fit_maxPareto,Fit_meanPareto,fitValue,NWmax,NWmin,NPmax,NPmin,NFmax,NFmin,NWmean,NPmean,NFmean\n")
-fileFitCit = open("fitCit.csv","w")
+# fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,Max_CVM,Mean_CVM,Min_CVM,Fit_maxPareto,Fit_meanPareto,fitValue,NWmax,NWmin,NPmax,NPmin,NFmax,NFmin,NWmean,NPmean,NFmean\n")
+
+fileFitCit = open("fitnessCitizen.csv","w")
+# fileUPMI = open("Utilization_PM.csv","w")
+# fileProb = open("probablities_citizen.csv","w")
 
 saveFits(fileFitInfo,0,gatt.fitnessGeneration)
 
@@ -246,11 +254,18 @@ for generation in range(1,totalGeneration):
     saveFits(fileFitInfo,generation,gatt.fitnessGeneration)
 
     #Prob values
-    saveFits(fileProb, generation, gatt.probFitness)
+    # saveFits(fileProb, generation, gatt.probFitness)
 
     #Fitness citizen
     saveFits(fileFitCit, generation, gatt.fit)
 
+    #U PMI
+    #print gatt.getUPMI(0)
+    # saveFits(fileUPMI, generation,gatt.getUPMI(0))
+    print("\t\t- %s seconds ---" % (time.time() - start_time))
+
 fileFitInfo.close()
-fileProb.close()
 fileFitCit.close()
+# fileProb.close()
+# fileUPMI.close()
+print("TOTAL TIME: %s seconds ---" % (time.time() - start_time))

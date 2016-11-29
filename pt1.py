@@ -12,7 +12,7 @@ x = 0
 
 df[x:].plot(y=["Wmax","Wmin","Wmean"])
 df[x:].plot(y=["Pmax","Pmin","Pmean"])
-#df[150:153].plot(y=["Fmax","Fmin","Fmean"])
+df[x:].plot(y=["Fmax","Fmin","Fmean"])
 
 df[:].plot(y=["Max_CVM","Min_CVM","Mean_CVM"])
 
@@ -21,10 +21,14 @@ df[:].plot(y=["Max_CVM","Min_CVM","Mean_CVM"])
 df[x:].plot(y=["fitValue","Fit_maxPareto","Fit_meanPareto"])
 
 
+#
+#df[x:].plot(y=["NWmax","NWmin","NWmean"])
+#df[x:].plot(y=["NPmax","NPmin","NPmean"])
+#df[x:].plot(y=["NFmax","NFmin","NFmean"])
 
-df[x:].plot(y=["NWmax","NWmin","NWmean"])
-df[x:].plot(y=["NPmax","NPmin","NPmean"])
-df[x:].plot(y=["NFmax","NFmin","NFmean"])
+
+
+#df = pd.read_csv("fitUPMI.csv",names=["pm1","pm2","pm3"])
 
 
 #
