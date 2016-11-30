@@ -903,9 +903,8 @@ class GATT:
         # self.logger.info("*** Matutation ") #,self.__M4_MoveVM,
         mutations = [self.__M1_createVM, self.__M2_removeVM, self.__M3_swapVM,
                      self.__M5_swapCBL, self.__M6_MoveCBL]
-
-        muti = random.randint(0, len(mutations) - 1)
         for idx in range(self.population):
+            muti = random.randint(0, len(mutations) - 1)
             if random.random() <= mutationHappen:
                 print "\tMutando citizen: %i" %idx
                 citM, state = mutations[muti](self.pop[idx])

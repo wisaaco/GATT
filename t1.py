@@ -148,8 +148,8 @@ print "Total Trabajos: %i " %environment["numberJobs"]
 
 
 #TOTALBLOQUES = 500/environment["replicationFactor"]
-a, m  = 1.1,0.5
-# a, m  = 1.001,0.005
+# a, m  = 1.1,0.5
+a, m  = 1.001,0.005
 sizeFiles = []
 for ix in range(environment["numberJobs"]):
     sizeFiles.append(int(np.random.pareto(a)*m)+1)
@@ -218,7 +218,7 @@ def saveFits(f,generation,fitInfo):
 #==============================================================================
 
 mutationHappen = 0.08 #p que ocurra
-sizePopulation = 20 # different VM 20
+# sizePopulation = 20 # different VM 20
 totalGeneration = 160
 
 clustersize="low"
@@ -230,8 +230,8 @@ maxIteration = 10
 
 for sizePopulation in [20,100]:
     print "*********************************  Population: %i **********************" % sizePopulation
-    # for idx,cutting in enumerate([g.C1_OneCuttingPoint,g.C2_TwoCuttingPoint]):
-    for idx  in range(0,1):
+    for idx  in range(0,1):  #  == for idx,cutting in enumerate([g.C1_OneCuttingPoint,g.C2_TwoCuttingPoint]):
+
         print "\t IDX_Cutting: %i" % idx
         for n_iteration in range(1,maxIteration+1):
             print "\t Iteration: %i" % n_iteration
@@ -285,4 +285,5 @@ for sizePopulation in [20,100]:
             # fileFitCit.close()
             # fileProb.close()
             # fileUPMI.close()
+            gatt.logger.info("TOTAL TIME: %s seconds ---" % (time.time() - start_time))
             print("TOTAL TIME: %s seconds ---" % (time.time() - start_time))

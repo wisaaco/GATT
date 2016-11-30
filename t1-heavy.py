@@ -122,9 +122,9 @@ casesOfVM = [
 environment = {
     "replicationFactor" : 3,
     "sizeBlock": 64, #MB
-
-    "numberOfPM": 400,  # 600,
-    "numberJobs": 6340  # 95109 #random.randint(10,45),
+    
+    "numberOfPM": 600,
+    "numberJobs": 11886 #random.randint(10,45),
 }
 
 environment["PM"] = np.random.choice(casesOfPM,environment["numberOfPM"]) #Nice: p=[.33,.33,.33]
@@ -148,7 +148,7 @@ print "Total Trabajos: %i " %environment["numberJobs"]
 
 
 #TOTALBLOQUES = 500/environment["replicationFactor"]
-a, m  = 1.01,0.005  # LOW??- - Creo que mal
+a, m  = 1.5,4 #aprox. dan
 sizeFiles = []
 for ix in range(environment["numberJobs"]):
     sizeFiles.append(int(np.random.pareto(a)*m)+1)
@@ -157,12 +157,12 @@ print "Total bloques: %i " %np.sum(sizeFiles)
 print "Total bloques con Replic Factor: %i " %(np.sum(sizeFiles)*environment["replicationFactor"])
 #Caracteristicas de los jobs
 #Tiempo de ejecución
-mu, sigma = 4.29, 1.44*1.44# mean and standard deviation
+mu, sigma = 3.5, 1.43
 tExecution = np.random.lognormal(mu, sigma,environment["numberJobs"])
-tExecution = np.multiply(tExecution,1000)
+# tExecution = np.multiply(tExecution,1000)
 
 #Mismo ratio de llegada de todos los trabajos
-lambda_arrivalRate= 45/float(environment["numberJobs"])
+lambda_arrivalRate= 4.26/float(environment["numberJobs"]) # por minuto
 arrivalRate_job =  np.linspace(lambda_arrivalRate/environment["numberJobs"],lambda_arrivalRate/environment["numberJobs"],environment["numberJobs"]).astype(float)
 arrivalRate_job = np.divide(arrivalRate_job,60000)
 
@@ -175,7 +175,7 @@ jobs = np.array([arrivalRate_job , #Frecuencia de llegadas
                  
                  
 def uCPU(job):
-    return job[0]* job[1]
+    return job[0]* job[1] *1000
 def uMM(job):
     return job[0]* job[2]
 def uHD(job):
@@ -215,68 +215,69 @@ def saveFits(f,generation,fitInfo):
 #  #  # MAIN
 #==============================================================================
 
-mutationHappen = 0.5 #p que ocurra
-# sizePopulation = 10 # different VM 20
+mutationHappen = 0.08 #p que ocurra
+# sizePopulation = 20 # different VM 20
 totalGeneration = 160
 
+clustersize="high"
 
-clustersize="comp"
-
-
-
-maxIteration = 10
-
-for sizePopulation in [20,100]:
-    print "Population: %i" % sizePopulation
-    for n_iteration in range(1,maxIteration+1):
-        print "\t Iteration: %i" %n_iteration
-
-        gatt = g.GATT(environment, casesOfVM, seed=n_iteration)
-        gatt.population(sizePopulation)
+maxIteration = 4
 
 
-        start_time = time.time()
 
-        # fileFitInfo = open("fits-%ic" + clustersize + "-n" + str(n_iteration) + "-s" + str(sizePopulation) + "-g" + str(totalGeneration) + ".csv", "wr")
-        fileFitInfo = open("data-compa-med/fits-COMP-cross%i-c%s-s%i-g%i-n%i.csv" %((idx+1),clustersize,sizePopulation,totalGeneration,n_iteration), "wr")
-        fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,Max_CVM,Min_CVM,Mean_CVM,Fit_maxPareto,fitValue,Fit_meanPareto,\n")
-        # fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,fitValue,Max_CVM,Min_CVM,Mean_CVM,HWmax,HWmin,HPmax,HPmin,HFmax,HFmin,NP,Fit_maxPareto,Fit_meanPareto,\n")
-        # fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,Max_CVM,Mean_CVM,Min_CVM,Fit_maxPareto,Fit_meanPareto,fitValue,NWmax,NWmin,NPmax,NPmin,NFmax,NFmin,NWmean,NPmean,NFmean\n")
+for n_iteration in range(1,maxIteration+1):
+    for sizePopulation in [20,100]:
+        print "*********************************  Population: %i **********************" % sizePopulation
+        for idx  in [0,1]:  #  == for idx,cutting in enumerate([g.C1_OneCuttingPoint,g.C2_TwoCuttingPoint]):
+            print "\t IDX_Cutting: %i" % idx
+            print "\t Iteration: %i" % n_iteration
+            start_time = time.time()
 
-        # fileFitCit = open("fitnessCitizen.csv","w")
-        # fileUPMI = open("Utilization_PM.csv","w")
-        # fileProb = open("probablities_citizen.csv","w")
+            gatt = g.GATT(environment, casesOfVM, seed=n_iteration)
+            gatt.logger.info("[ROOT] ******** Population: %i ***  IDX Cutting: %i **** Iteration: %i " % (sizePopulation,idx,n_iteration))
+            gatt.population(sizePopulation)
 
-        saveFits(fileFitInfo,0,gatt.fitnessGeneration)
+            # fileFitInfo = open("fits-%ic" + clustersize + "-n" + str(n_iteration) + "-s" + str(sizePopulation) + "-g" + str(totalGeneration) + ".csv", "wr")
+            fileFitInfo = open("data-high/fits-cross%i-c%s-s%i-g%i-n%i.csv" %((idx+1),clustersize,sizePopulation,totalGeneration,n_iteration), "wr")
+            fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,Max_CVM,Min_CVM,Mean_CVM,Fit_maxPareto,fitValue,Fit_meanPareto,\n")
+            # fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,fitValue,Max_CVM,Min_CVM,Mean_CVM,HWmax,HWmin,HPmax,HPmin,HFmax,HFmin,NP,Fit_maxPareto,Fit_meanPareto,\n")
+            # fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,Max_CVM,Mean_CVM,Min_CVM,Fit_maxPareto,Fit_meanPareto,fitValue,NWmax,NWmin,NPmax,NPmin,NFmax,NFmin,NWmean,NPmean,NFmean\n")
 
-        for generation in range(1,totalGeneration):
-            print "Generation: %i" %generation
-                                                #C1_OneCuttingPoint   C2_TwoCuttingPoint
-            nextGeneration = gatt.evolveCOMP(0.9,tries=10000,generation=generation)
-            if not nextGeneration:
-                print "No evolution"
-                break
+            # fileFitCit = open("fitnessCitizen.csv","w")
+            # fileUPMI = open("Utilization_PM.csv","w")
+            # fileProb = open("probablities_citizen.csv","w")
 
+            saveFits(fileFitInfo,0,gatt.fitnessGeneration)
 
-            gatt.mutateCOMP(mutationHappen)
+            for generation in range(1,totalGeneration):
+                print "\t\tGeneration: %i" %generation
+                                                    #C1_OneCuttingPoint   C2_TwoCuttingPoint
+                nextGeneration = gatt.evolve(idx,0.9,tries=10000,generation=generation)
+                if not nextGeneration:
+                    print "ERROR - NO MORE EVOLUTION "
+                    break
 
-            #Fit values
-            saveFits(fileFitInfo,generation,gatt.fitnessGeneration)
+                if random.random() <= mutationHappen:
+                    state = gatt.mutate()
+                    print "\t\t\t Mutation: %s" %state
 
-            #Prob values
-            # saveFits(fileProb, generation, gatt.probFitness)
+                #Fit values
+                saveFits(fileFitInfo,generation,gatt.fitnessGeneration)
 
-            #Fitness citizen
-            # saveFits(fileFitCit, generation, gatt.fit)
+                #Prob values
+                # saveFits(fileProb, generation, gatt.probFitness)
 
-            #U PMI
-            #print gatt.getUPMI(0)
-            # saveFits(fileUPMI, generation,gatt.getUPMI(0))
-            # print("\t\t- %s seconds ---" % (time.time() - start_time))
+                #Fitness citizen
+                # saveFits(fileFitCit, generation, gatt.fit)
 
-        fileFitInfo.close()
-        # fileFitCit.close()
-        # fileProb.close()
-        # fileUPMI.close()
-        gatt.logger.info("TOTAL TIME: %s seconds ---" % (time.time() - start_time))
-        print("TOTAL TIME: %s seconds ---" % (time.time() - start_time))
+                #U PMI
+                #print gatt.getUPMI(0)
+                # saveFits(fileUPMI, generation,gatt.getUPMI(0))
+                # print("\t\t- %s seconds ---" % (time.time() - start_time))
+
+            fileFitInfo.close()
+            # fileFitCit.close()
+            # fileProb.close()
+            # fileUPMI.close()
+            gatt.logger.info("TOTAL TIME: %s seconds ---" % (time.time() - start_time))
+            print("TOTAL TIME: %s seconds ---" % (time.time() - start_time))

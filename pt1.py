@@ -39,3 +39,16 @@ df[x:].plot(y=["fitValue","Fit_maxPareto","Fit_meanPareto"])
 #
 #df[10:].plot(y="fitValue")
 
+a, m  = 1.5,4
+sizeFiles = []
+for ix in range(11886):
+    sizeFiles.append(int(np.random.pareto(a)*m)+1)
+np.sum(sizeFiles)
+
+Bloques = 100000
+
+mu, sigma = 3.5, 1.43# mean and standard deviation
+tExecution = np.random.lognormal(mu, sigma,11886)
+np.mean(tExecution)
+
+Segtundos 96

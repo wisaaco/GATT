@@ -233,7 +233,7 @@ maxIteration = 10
 for sizePopulation in [20,100]:
     print "*********************************  Population: %i **********************" % sizePopulation
     # for idx,cutting in enumerate([g.C1_OneCuttingPoint,g.C2_TwoCuttingPoint]):
-    for idx  in range(0,1):
+    for idx  in range(1,2):
         print "\t IDX_Cutting: %i" % idx
         for n_iteration in range(1,maxIteration+1):
             print "\t Iteration: %i" % n_iteration
@@ -246,7 +246,7 @@ for sizePopulation in [20,100]:
 
 
             # fileFitInfo = open("fits-%ic" + clustersize + "-n" + str(n_iteration) + "-s" + str(sizePopulation) + "-g" + str(totalGeneration) + ".csv", "wr")
-            fileFitInfo = open("data2/fits-cross%i-c%s-s%i-g%i-n%i.csv" %((idx+1),clustersize,sizePopulation,totalGeneration,n_iteration), "wr")
+            fileFitInfo = open("data-med/fits-cross%i-c%s-s%i-g%i-n%i.csv" %((idx+1),clustersize,sizePopulation,totalGeneration,n_iteration), "wr")
             fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,Max_CVM,Min_CVM,Mean_CVM,Fit_maxPareto,fitValue,Fit_meanPareto,\n")
             # fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,fitValue,Max_CVM,Min_CVM,Mean_CVM,HWmax,HWmin,HPmax,HPmin,HFmax,HFmin,NP,Fit_maxPareto,Fit_meanPareto,\n")
             # fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,Max_CVM,Mean_CVM,Min_CVM,Fit_maxPareto,Fit_meanPareto,fitValue,NWmax,NWmin,NPmax,NPmin,NFmax,NFmin,NWmean,NPmean,NFmean\n")
@@ -287,4 +287,5 @@ for sizePopulation in [20,100]:
             # fileFitCit.close()
             # fileProb.close()
             # fileUPMI.close()
+            gatt.logger.info("TOTAL TIME: %s seconds ---" % (time.time() - start_time))
             print("TOTAL TIME: %s seconds ---" % (time.time() - start_time))

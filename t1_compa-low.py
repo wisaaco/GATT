@@ -123,8 +123,8 @@ environment = {
     "replicationFactor" : 3,
     "sizeBlock": 64, #MB
 
-    "numberOfPM": 400,  # 600,
-    "numberJobs": 6340  # 95109 #random.randint(10,45),
+    "numberOfPM": 20,  # 600,
+    "numberJobs": 1585  # 95109 #random.randint(10,45),
 }
 
 environment["PM"] = np.random.choice(casesOfPM,environment["numberOfPM"]) #Nice: p=[.33,.33,.33]
@@ -148,7 +148,7 @@ print "Total Trabajos: %i " %environment["numberJobs"]
 
 
 #TOTALBLOQUES = 500/environment["replicationFactor"]
-a, m  = 1.01,0.005  # LOW??- - Creo que mal
+a,m=1.1,0.5## LOW
 sizeFiles = []
 for ix in range(environment["numberJobs"]):
     sizeFiles.append(int(np.random.pareto(a)*m)+1)
@@ -157,12 +157,13 @@ print "Total bloques: %i " %np.sum(sizeFiles)
 print "Total bloques con Replic Factor: %i " %(np.sum(sizeFiles)*environment["replicationFactor"])
 #Caracteristicas de los jobs
 #Tiempo de ejecución
-mu, sigma = 4.29, 1.44*1.44# mean and standard deviation
+# mu, sigma = 4.29, 1.44*1.44# mean and standard deviation #MEDIUM
+mu, sigma = 4.32, 1.31 #LOW
 tExecution = np.random.lognormal(mu, sigma,environment["numberJobs"])
 tExecution = np.multiply(tExecution,1000)
 
 #Mismo ratio de llegada de todos los trabajos
-lambda_arrivalRate= 45/float(environment["numberJobs"])
+lambda_arrivalRate= 0.44/float(environment["numberJobs"])
 arrivalRate_job =  np.linspace(lambda_arrivalRate/environment["numberJobs"],lambda_arrivalRate/environment["numberJobs"],environment["numberJobs"]).astype(float)
 arrivalRate_job = np.divide(arrivalRate_job,60000)
 
@@ -220,7 +221,7 @@ mutationHappen = 0.5 #p que ocurra
 totalGeneration = 160
 
 
-clustersize="comp"
+clustersize="comp-low"
 
 
 
@@ -238,7 +239,7 @@ for sizePopulation in [20,100]:
         start_time = time.time()
 
         # fileFitInfo = open("fits-%ic" + clustersize + "-n" + str(n_iteration) + "-s" + str(sizePopulation) + "-g" + str(totalGeneration) + ".csv", "wr")
-        fileFitInfo = open("data-compa-med/fits-COMP-cross%i-c%s-s%i-g%i-n%i.csv" %((idx+1),clustersize,sizePopulation,totalGeneration,n_iteration), "wr")
+        fileFitInfo = open("data-compa-low/fits-COMP-cross%i-c%s-s%i-g%i-n%i.csv" %((idx+1),clustersize,sizePopulation,totalGeneration,n_iteration), "wr")
         fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,Max_CVM,Min_CVM,Mean_CVM,Fit_maxPareto,fitValue,Fit_meanPareto,\n")
         # fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,fitValue,Max_CVM,Min_CVM,Mean_CVM,HWmax,HWmin,HPmax,HPmin,HFmax,HFmin,NP,Fit_maxPareto,Fit_meanPareto,\n")
         # fileFitInfo.write("generation,Wmax,Wmin,Pmax,Pmin,Fmax,Fmin,Wmean,Pmean,Fmean,Max_CVM,Mean_CVM,Min_CVM,Fit_maxPareto,Fit_meanPareto,fitValue,NWmax,NWmin,NPmax,NPmin,NFmax,NFmin,NWmean,NPmean,NFmean\n")
